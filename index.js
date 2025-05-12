@@ -98,7 +98,7 @@ app.get('/api/tiktok/user/videos', async (req, res) => {
         const cleanData = data.data.videos.map(video => ({
             id: video.video_id,
             title: video.title,
-            noWatermarkUrl: video.wmplay,
+            noWatermarkUrl: video.play,
             stats: {
                 playCount: video.play_count,
                 diggCount: video.digg_count,
