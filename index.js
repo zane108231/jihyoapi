@@ -2,16 +2,12 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const path = require('path');
-require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // TikTok API configuration
 const TIKWM_API = {
@@ -30,7 +26,7 @@ const buildApiUrl = (endpoint, params = {}) => {
     return url.toString();
 };
 
-// Get user profile endpoint
+// Get user profile
 app.get('/api/tiktok/user', async (req, res) => {
     try {
         const { username } = req.query;
@@ -64,7 +60,7 @@ app.get('/api/tiktok/user', async (req, res) => {
     }
 });
 
-// Get user videos endpoint
+// Get user videos
 app.get('/api/tiktok/user/videos', async (req, res) => {
     try {
         const { username } = req.query;
@@ -109,7 +105,7 @@ app.get('/api/tiktok/user/videos', async (req, res) => {
     }
 });
 
-// TikTok search endpoint
+// Search videos
 app.get('/api/tiktok/search', async (req, res) => {
     try {
         const { keyword } = req.query;
@@ -154,17 +150,73 @@ app.get('/api/tiktok/search', async (req, res) => {
     }
 });
 
-// Health check endpoint
+// Root HTML UI
+app.get('/', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <title>JihyoAPI Status</title>
+            <style>
+                body {
+                    font-family: sans-serif;
+                    background: #111;
+                    color: #eee;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    margin: 0;
+                }
+                .card {
+                    background: #222;
+                    padding: 2rem;
+                    border-radius: 1rem;
+                    box-shadow: 0 0 15px rgba(0, 255, 170, 0.2);
+                }
+                h1 {
+                    margin-bottom: 1rem;
+                }
+                .info {
+                    font-size: 1.2rem;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>🛡️ JihyoAPI Status</h1>
+                <div class="info" id="status">Loading...</div>
+            </div>
+
+            <script>
+                const startTime = Date.now();
+                function formatUptime(ms) {
+                    const sec = Math.floor(ms / 1000) % 60;
+                    const min = Math.floor(ms / (1000 * 60)) % 60;
+                    const hr = Math.floor(ms / (1000 * 60 * 60)) % 24;
+                    const day = Math.floor(ms / (1000 * 60 * 60 * 24));
+                    return \`\${day}d \${hr}h \${min}m \${sec}s\`;
+                }
+                function updateStatus() {
+                    const uptime = formatUptime(Date.now() - startTime);
+                    document.getElementById('status').textContent = \`✅ API is online — Uptime: \${uptime}\`;
+                }
+                updateStatus();
+                setInterval(updateStatus, 1000);
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+// Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', version: '1.0.0', api: 'tikwm.com' });
 });
 
-// Fallback to index.html
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Start server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
     console.log('Using tikwm.com API');
