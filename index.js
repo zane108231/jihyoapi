@@ -1,6 +1,8 @@
+// index.js
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -9,6 +11,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // TikTok API configuration
 const TIKWM_API = {
@@ -106,7 +109,7 @@ app.get('/api/tiktok/user/videos', async (req, res) => {
     }
 });
 
-// TikTok search endpoint (FIXED: using "keywords" not "keyword")
+// TikTok search endpoint
 app.get('/api/tiktok/search', async (req, res) => {
     try {
         const { keyword } = req.query;
@@ -154,6 +157,11 @@ app.get('/api/tiktok/search', async (req, res) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', version: '1.0.0', api: 'tikwm.com' });
+});
+
+// Fallback to index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start server
