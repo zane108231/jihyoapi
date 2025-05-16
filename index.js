@@ -46,7 +46,6 @@ app.get('/api/tiktok/user', async (req, res) => {
             throw new Error(data.msg || 'Failed to fetch user information');
         }
 
-        // Clean up the response to only include what's needed
         const cleanData = {
             id: data.data.user.id,
             username: data.data.user.uniqueId,
@@ -94,7 +93,6 @@ app.get('/api/tiktok/user/videos', async (req, res) => {
             throw new Error(data.msg || 'Failed to fetch user videos');
         }
 
-        // Clean up the response to only include what's needed
         const cleanData = data.data.videos.map(video => ({
             id: video.video_id,
             title: video.title,
@@ -121,6 +119,65 @@ app.get('/api/tiktok/user/videos', async (req, res) => {
     }
 });
 
+// TikTok search endpoint
+app.get('/api/tiktok/search', async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a search keyword'
+            });
+        }
+
+        const apiUrl = buildApiUrl('/api/feed/search', { keyword });
+        const response = await axios.get(apiUrl);
+        const data = response.data;
+
+        if (data.code !== 0) {
+            throw new Error(data.msg || 'Failed to fetch search results');
+        }
+
+        const cleanData = data.data.videos.map(video => ({
+            id: video.video_id,
+            title: video.title,
+            cover: video.cover,
+            duration: video.duration,
+            noWatermarkUrl: video.play,
+            music: {
+                title: video.music_info.title,
+                author: video.music_info.author,
+                url: video.music_info.play
+            },
+            stats: {
+                playCount: video.play_count,
+                diggCount: video.digg_count,
+                commentCount: video.comment_count,
+                shareCount: video.share_count,
+                downloadCount: video.download_count
+            },
+            createTime: video.create_time,
+            author: {
+                id: video.author.id,
+                username: video.author.unique_id,
+                nickname: video.author.nickname,
+                avatar: video.author.avatar
+            }
+        }));
+
+        return res.json(cleanData);
+
+    } catch (error) {
+        console.error('Error:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch TikTok search results',
+            error: error.message
+        });
+    }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
@@ -134,4 +191,4 @@ app.get('/health', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
     console.log('Using tikwm.com API');
-}); 
+});
